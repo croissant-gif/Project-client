@@ -70,7 +70,7 @@ export default function RoomSelectionPage() {
   }
 
   return (
-    <section className='w-full bg-gray-50'>
+    <section className='w-full bg-gray-50  font-montserrat'>
       <div className="container mx-auto py-6">
         <h1 className="text-3xl font-semibold text-center text-gray-800 mb-8">Your Assigned Rooms</h1>
 

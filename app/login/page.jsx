@@ -58,7 +58,7 @@ export default function LoginPage() {
 
 
   return (
-    <section className="w-full">
+    <section className="w-full font-montserrat">
       <section className="flex justify-center items-center min-h-screen bg-gradient-to-r from-gray-300 to-blue-600">
         <div className="bg-white p-8 rounded-lg shadow-lg w-full sm:w-96 max-w-sm">
           <h2 className="text-3xl font-semibold text-center text-gray-800 mb-6">Employee Login</h2>

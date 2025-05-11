@@ -60,7 +60,7 @@ export const Sidebar = () => {
     setIsCollapsed(!isCollapsed); // Toggle the sidebar state
   };  
   return (
-    <section className="flex h-screen">
+    <section className="flex h-screen  font-montserrat">
       {/* Sidebar */}
       <div className={`bg-gradient-to-b from-blue-500 to-blue-300 h-screen shadow-lg ${isCollapsed ? 'w-20' : 'w-60'} transform transition-width duration-300 ease-in-out`}>
          {/* Title at Top */}

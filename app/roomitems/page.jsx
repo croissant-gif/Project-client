@@ -114,7 +114,7 @@ export default function RoomSelectionPage() {
     return <div className="text-center mt-10">Loading...</div>;
   }
   return (
-    <section className="w-full bg-white">
+    <section className="w-full bg-white  font-montserrat">
       <div className="container mx-auto p-6">
         <h1 className="text-3xl font-semibold text-center text-gray-800 mb-6">Room Items</h1>
   
