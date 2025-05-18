@@ -10,6 +10,8 @@ module.exports = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+         customBlue: '#279FD4',
+                customgreen: '#70C0BD', 
       },
       fontFamily: {
         body: ["Lato"],

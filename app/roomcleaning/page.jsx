@@ -184,14 +184,22 @@ const handleRoomClick = async (roomId) => {
     return d.toLocaleDateString();
   };
 
-  const formatTime = (time) => {
-    if (!time) return 'N/A';
-    return new Date(time).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    });
-  };
+const formatTime = (time) => {
+  if (!time) return 'N/A';
+
+  // If time is just "HH:mm", prepend today's date
+  if (/^\d{2}:\d{2}$/.test(time)) {
+    const today = new Date();
+    time = `${today.toISOString().split('T')[0]}T${time}:00`;
+  }
+
+  const date = new Date(time);
+  return isNaN(date.getTime()) ? 'Invalid Time' : date.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  });
+};
 
   if (loading) {
     return <div>Loading...</div>;  
@@ -210,7 +218,7 @@ const handleRoomClick = async (roomId) => {
                 <p className="text-sm text-gray-500">Room Type: {room.roomType}</p>
                 <p className="text-sm text-gray-500">Arrival: {formatDate(room.arrivalDate)}</p>
                 <p className="text-sm text-gray-500">Departure: {formatDate(room.departureDate)}</p>
-                <p className="text-sm text-gray-500">Arrival Time: {formatTime(room.arrivalTime)}</p>
+                 <p className="text-sm text-gray-500">Arrival Time: {formatTime(room.arrivalTime)}</p>
                 <p className="text-sm text-gray-500">Special Request: {room.specialRequest}</p>
 
                 {room.status === 'CLEANING' ? (

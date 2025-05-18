@@ -1,6 +1,7 @@
 import dbConnect from '../../../../utils/dbConnect'; // Adjust path if needed
 import Rooms from '../../../../models/Rooms';  // Make sure your Room model is correct
 
+
 dbConnect();
 
 // GET handler to fetch rooms

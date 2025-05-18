@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import      Image from 'next/image'; 
 
 export const Sidebar = () => {
   const [fullName, setFullName] = useState('');
@@ -60,15 +61,22 @@ export const Sidebar = () => {
     setIsCollapsed(!isCollapsed); // Toggle the sidebar state
   };  
   return (
-    <section className="flex h-screen  font-montserrat">
+    <section className="flex h-screen   font-montserrat">
       {/* Sidebar */}
-      <div className={`bg-gradient-to-b from-blue-500 to-blue-300 h-screen shadow-lg ${isCollapsed ? 'w-20' : 'w-60'} transform transition-width duration-300 ease-in-out`}>
+       <div className={`bg-gradient-to-b from-blue-500  to-customgreen  shadow-lg ${isCollapsed ? 'w-20 ' : 'w-60   '}  transform transition-width duration-300 ease-in-out `}>
          {/* Title at Top */}
          <div className={`px-3 py-2 w-full transition-all duration-300 flex justify-center ${isCollapsed ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
-          <h1 className="text-white font-normal text-sm text-center">
-            HOUSEKEEPING MANAGEMENT SYSTEM
-          </h1>
-         </div>
+             <div className="  justify-center  ">
+                      <Image
+                        src="/logowhite.png"    
+                        alt="App Logo"
+                        width={100}        
+                        height={100}
+                        priority        
+                      />
+                    </div>
+      
+        </div>
          <div className="px-4 py-5">
         
      {/* Hamburger Button to toggle sidebar */}
@@ -125,6 +133,9 @@ export const Sidebar = () => {
               <span className={`${isCollapsed ? 'hidden' : 'block'}`}>ROOM ITEMS</span>
             </div>
           </Link>
+
+
+
        
           {/* LOGOUT Button */}
           <div 

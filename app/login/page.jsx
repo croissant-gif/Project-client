@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';  
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -59,8 +60,19 @@ export default function LoginPage() {
 
   return (
     <section className="w-full font-montserrat">
-      <section className="flex justify-center items-center min-h-screen bg-gradient-to-r from-gray-300 to-blue-600">
-        <div className="bg-white p-8 rounded-lg shadow-lg w-full sm:w-96 max-w-sm">
+       <section className="flex justify-center items-center min-h-screen bg-gradient-to-r  from-customgreen to-customBlue">
+         <div className="bg-white p-8 rounded-lg shadow-lg w-full sm:w-96 max-w-sm">
+          
+          {/* Logo goes here */}
+          <div className="flex justify-center mb-4">
+            <Image
+              src="/logo.png"   // Path to your uploaded PNG
+              alt="App Logo"
+              width={200}        // Adjust size as needed
+              height={200}
+              priority           // Makes sure the image loads early
+            />
+          </div>
           <h2 className="text-3xl font-semibold text-center text-gray-800 mb-6">Employee Login</h2>
           {message && <div className="mb-4 text-center text-lg font-semibold text-red-600">{message}</div>}
           <form onSubmit={handleLogin} className="space-y-4">
