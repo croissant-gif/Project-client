@@ -64,7 +64,7 @@ export default function RoomSelectionPage() {
         if (data) {
           setUserConditions(data);  // Update state with conditions from MongoDB
         }
-      } catch (error) {
+      } catch (error) { 
         console.error('Error fetching conditions from MongoDB:', error);
       }
     };
@@ -82,7 +82,7 @@ export default function RoomSelectionPage() {
         ? { 
             ...room, 
             status: newStatus, 
-            startTime: room.startTime || startTime,  // Ensure startTime is set
+            startTime: room.startTime || startTime,   
             finishTime
           }
         : room
