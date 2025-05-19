@@ -18,81 +18,94 @@ export default function RoomSelectionPage() {
     'Status Unclear', 'Make up Room', 'Due Out', 'Did Not Check Out', 'House Use', 'Sleep Out'
   ];
 
-  useEffect(() => {
-    const username = localStorage.getItem("username");
-    const password = localStorage.getItem("password");
-    if (!username) {
-      setMessage("You need to log in first.");
-      router.push("/login");
-      return;
-    }
-  
-    const fetchAssignedRooms = async () => {
-      try {
-        const response = await fetch('/api/todos/employee', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username,password }),
+useEffect(() => {
+  const username = localStorage.getItem("username");
+  const password = localStorage.getItem("password");
+
+  if (!username) {
+    setMessage("You need to log in first.");
+    router.push("/login");
+    return;
+  }
+
+  const fetchAssignedRooms = async () => {
+    try {
+      const response = await fetch('/api/todos/employee', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Retrieve startTime and finishTime from localStorage and merge with room data
+        const roomsWithTimes = data.assignedRooms.map((room) => {
+          const storedStartTime = localStorage.getItem(`startTime-${room._id}`);
+          const storedFinishTime = localStorage.getItem(`finishTime-${room._id}`);
+
+          return {
+            ...room,
+            startTime: storedStartTime || room.startTime,
+            finishTime: storedFinishTime || room.finishTime,
+          };
         });
-  
-        const data = await response.json();
-  
-        if (response.ok) {
-          // Retrieve startTime from localStorage and update assignedRooms
-          const roomsWithStartTime = data.assignedRooms.map((room) => {
-            const storedStartTime = localStorage.getItem(`startTime-${room._id}`);
-            return storedStartTime ? { ...room, startTime: storedStartTime } : room;
-          });
-  
-          setAssignedRooms(roomsWithStartTime);
-          setLoading(false);
-        } else {
-          setMessage(data.message || 'Failed to fetch rooms.');
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error('Error fetching assigned rooms:', error);
-        setMessage('Error fetching assigned rooms.');
+
+        setAssignedRooms(roomsWithTimes);
+        setLoading(false);
+      } else {
+        setMessage(data.message || 'Failed to fetch rooms.');
         setLoading(false);
       }
-    };
-  
-    const fetchUserConditions = async () => {
-      try {
-        const response = await fetch('/api/todos/conditions');
-        const data = await response.json();
-        if (data) {
-          setUserConditions(data);  // Update state with conditions from MongoDB
-        }
-      } catch (error) {
-        console.error('Error fetching conditions from MongoDB:', error);
+    } catch (error) {
+      console.error('Error fetching assigned rooms:', error);
+      setMessage('Error fetching assigned rooms.');
+      setLoading(false);
+    }
+  };
+
+  const fetchUserConditions = async () => {
+    try {
+      const response = await fetch('/api/todos/conditions');
+      const data = await response.json();
+      if (data) {
+        setUserConditions(data); // Update state with conditions from MongoDB
       }
-    };
-  
-    fetchAssignedRooms();
-    fetchUserConditions();
-  }, [router]);
+    } catch (error) {
+      console.error('Error fetching conditions from MongoDB:', error);
+    }
+  };
+
+  fetchAssignedRooms();
+  fetchUserConditions();
+}, [router]);
+
   
 
- const handleStatusChange = async (roomId, newStatus, startTime = null, finishTime = null) => {
+const handleStatusChange = async (roomId, newStatus, startTime = null, finishTime = null) => {
   try {
-    // Update the rooms with new status and startTime
     const updatedRooms = assignedRooms.map((room) =>
       room._id === roomId
-        ? { 
-            ...room, 
-            status: newStatus, 
-            startTime: room.startTime || startTime,  // Ensure startTime is set
-            finishTime
+        ? {
+            ...room,
+            status: newStatus,
+            startTime: room.startTime || startTime,
+            finishTime,
           }
         : room
     );
 
-    setAssignedRooms(updatedRooms);  // Update state immediately with new data
-
+    setAssignedRooms(updatedRooms);
     const updatedRoom = updatedRooms.find((room) => room._id === roomId);
 
-    // Send the updated room to your backend API to update MongoDB
+    // ✅ Save to localStorage
+    if (startTime) {
+      localStorage.setItem(`startTime-${roomId}`, startTime);
+    }
+    if (finishTime) {
+      localStorage.setItem(`finishTime-${roomId}`, finishTime);
+    }
+
     const response = await fetch('/api/todos/rooms', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -108,6 +121,7 @@ export default function RoomSelectionPage() {
   }
 };
 
+
   
 const handleRoomClick = async (roomId) => {
   const isCleaningInProgress = assignedRooms.some(
@@ -121,6 +135,13 @@ const handleRoomClick = async (roomId) => {
 
   if (window.confirm('Are you sure you want to start cleaning this room?')) {
     const startTime = new Date().toISOString();
+
+    // ✅ Clear any old times for this room
+    localStorage.removeItem(`startTime-${roomId}`);
+    localStorage.removeItem(`finishTime-${roomId}`);
+
+    // ✅ Save new startTime immediately
+    localStorage.setItem(`startTime-${roomId}`, startTime);
 
     setAssignedRooms((prevRooms) =>
       prevRooms.map((room) =>
@@ -146,13 +167,12 @@ const handleRoomClick = async (roomId) => {
       if (!response.ok) {
         throw new Error(data.message || 'Failed to update room status');
       }
-
-      localStorage.setItem(`startTime-${roomId}`, startTime);
     } catch (error) {
       console.error('Error updating room status:', error);
     }
   }
 };
+
 
 
   
