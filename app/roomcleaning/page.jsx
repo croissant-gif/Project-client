@@ -88,7 +88,7 @@ export default function RoomSelectionPage() {
         : room
     );
 
-    setAssignedRooms(updatedRooms);  // Update state immediately with new data
+    setAssignedRooms(updatedRooms);  
 
     const updatedRoom = updatedRooms.find((room) => room._id === roomId);
 
