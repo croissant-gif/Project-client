@@ -221,26 +221,31 @@ const formatTime = (time) => {
                  <p className="text-sm text-gray-500">Arrival Time: {formatTime(room.arrivalTime)}</p>
                 <p className="text-sm text-gray-500">Special Request: {room.specialRequest}</p>
 
-                {room.status === 'CLEANING' ? (
-                  <div className="mt-4 text-black">
-                    <p>Started Cleaning: {formatTime(room.startTime)}</p>
-                    <button
-                      onClick={() => handleFinishCleaning(room._id)}
-                      className="bg-green-500 text-white px-4 py-2 rounded-md"
-                    >
-                      Finish Cleaning
-                    </button>
-                  </div>
-                ) : (
-                  <div className="mt-4">
-                    <button
-                      onClick={() => handleRoomClick(room._id)} 
-                      className="bg-blue-500 text-white px-4 py-2 rounded-md"
-                    >
-                      Start Cleaning
-                    </button>
-                  </div>
-                )}
+             {room.finishTime ? (
+  <div className="mt-4  font-semibold text-green-600">
+    <p>Finished Cleaning</p>
+  </div>
+) : room.status === 'CLEANING' ? (
+  <div className="mt-4 text-black">
+    <p>Started Cleaning: {formatTime(room.startTime)}</p>
+    <button
+      onClick={() => handleFinishCleaning(room._id)}
+      className="bg-green-500 text-white px-4 py-2 rounded-md"
+    >
+      Finish Cleaning
+    </button>
+  </div>
+) : (
+  <div className="mt-4">
+    <button
+      onClick={() => handleRoomClick(room._id)} 
+      className="bg-blue-500 text-white px-4 py-2 rounded-md"
+    >
+      Start Cleaning
+    </button>
+  </div>
+)}
+
 
                 {room.finishTime && (
                   <div className="mt-4 text-black">

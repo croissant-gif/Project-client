@@ -18,7 +18,7 @@ export async function POST(request) {
 
    
     const assignedRooms = await Rooms.find({ assignedTo: employee._id })
-      .select('roomName roomType status arrivalDate departureDate arrivalTime specialRequest');
+      .select('roomName roomType status arrivalDate departureDate arrivalTime specialRequest startTime finishTime');
 
     const employeeData = {
       name: employee.name,
