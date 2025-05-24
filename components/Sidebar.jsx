@@ -3,27 +3,25 @@
 import Link from 'next/link';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import      Image from 'next/image'; 
+import Image from 'next/image';
 
 export const Sidebar = () => {
   const [fullName, setFullName] = useState('');
   const [schedule, setSchedule] = useState('');
-  const router = useRouter(); // To navigate programmatically
-  const [isCollapsed, setIsCollapsed] = useState(true); // Sidebar collapse state
+  const router = useRouter();
+  const [isCollapsed, setIsCollapsed] = useState(true);
 
   useEffect(() => {
-    // Get the stored full name from localStorage
     const storedName = localStorage.getItem('name');
     if (storedName) {
-      setFullName(storedName); // Set the name state
+      setFullName(storedName);
     }
 
-    // Fetch employee schedule
     const fetchEmployeeSchedule = async () => {
       try {
         const username = localStorage.getItem('username');
         const password = localStorage.getItem('password');
-        
+
         if (username && password) {
           const response = await fetch('/api/todos/employee', {
             method: 'POST',
@@ -33,7 +31,7 @@ export const Sidebar = () => {
 
           const data = await response.json();
           if (response.ok) {
-            setSchedule(data.schedule || 'No schedule available'); // Set employee schedule
+            setSchedule(data.schedule || 'No schedule available');
           } else {
             setSchedule('Schedule not available');
           }
@@ -48,23 +46,37 @@ export const Sidebar = () => {
   }, []);
 
   const handleLogout = () => {
-    // Clear the localStorage to remove the username and name
     localStorage.removeItem('username');
     localStorage.removeItem('password');
     localStorage.removeItem('name');
-    
-    // Redirect to the login page
     router.push('/login');
   };
 
   const toggleSidebar = () => {
-    setIsCollapsed(!isCollapsed); // Toggle the sidebar state
-  };  
+    setIsCollapsed(!isCollapsed);
+  };
+
+  const convertTo12HourFormat = (scheduleString) => {
+    if (!scheduleString) return '';
+
+    const [start, end] = scheduleString.split(' - ');
+    if (!start || !end) return scheduleString;
+
+    const formatTime = (time) => {
+      const [hour, minute] = time.split(':');
+      const h = parseInt(hour, 10);
+      const period = h >= 12 ? 'PM' : 'AM';
+      const adjustedHour = h % 12 || 12;
+      return `${adjustedHour}:${minute} ${period}`;
+    };
+
+    return `${formatTime(start)} - ${formatTime(end)}`;
+  };
   return (
     <section className="flex h-screen   font-montserrat">
-      {/* Sidebar */}
+ 
        <div className={`bg-gradient-to-b from-blue-500  to-customgreen  shadow-lg ${isCollapsed ? 'w-20 ' : 'w-60   '}  transform transition-width duration-300 ease-in-out `}>
-         {/* Title at Top */}
+  
          <div className={`px-3 py-2 w-full transition-all duration-300 flex justify-center ${isCollapsed ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
              <div className="  justify-center  ">
                       <Image
@@ -79,7 +91,7 @@ export const Sidebar = () => {
         </div>
          <div className="px-4 py-5">
         
-     {/* Hamburger Button to toggle sidebar */}
+      
      <div className="w-full flex justify-start px-4 pt-1">
      <button 
       onClick={toggleSidebar} 
@@ -92,7 +104,7 @@ export const Sidebar = () => {
   </div>
 
 
-  {/* Admin Label */}
+   
   <div className={`px-4 py-2 w-full text-white text-lg text-center font-semibold transition-all duration-300 ${isCollapsed ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
     STAFF
   </div>
@@ -102,7 +114,7 @@ export const Sidebar = () => {
           {fullName ? `Hello, ${fullName}` : 'Hello, Guest'}
         </div>
         <div className={`flex flex-col ${isCollapsed ? 'space-y-3' : 'space-y-5'}`}>
-          {/* Links */}
+        
           <Link href="/rooms">
             <div className='flex items-center px-6 py-3 text-white font-semibold hover:bg-blue-300 transition duration-300'>
               <svg className="w-5 h-5 mx-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
@@ -112,7 +124,7 @@ export const Sidebar = () => {
               <span className={` ${isCollapsed ? 'hidden' : 'block'}`}>ASSIGNED ROOMS</span>
             </div>
           </Link>
-          {/* More Links */}
+          
           <Link href="/roomcleaning">
             <div className='flex items-center px-6 py-3 text-white font-semibold hover:bg-blue-300 transition duration-300'>
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 mx-2">
@@ -137,7 +149,6 @@ export const Sidebar = () => {
 
 
        
-          {/* LOGOUT Button */}
           <div 
             onClick={handleLogout} 
             className='flex items-center px-6 py-3 text-white font-semibold hover:bg-blue-300 transition duration-300 cursor-pointer'>
@@ -147,10 +158,10 @@ export const Sidebar = () => {
             <span className={`${isCollapsed ? 'hidden' : 'block'}`}>LOG OUT</span>
           </div>
          
-             {/* Display Schedule */}
+           
           <div className={`px-6 py-3 text-white font-semibold ${isCollapsed ? 'hidden' : 'block'}`}>
             <h3>Your Shift:</h3>
-            <p>{schedule}</p>
+            <p>{convertTo12HourFormat(schedule)}</p>
           </div>
 
 

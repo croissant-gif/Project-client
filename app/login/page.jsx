@@ -11,11 +11,11 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Check if the user is logged in when the component mounts
+ 
   useEffect(() => {
     const storedUsername = localStorage.getItem("username");
     if (storedUsername) {
-      // If logged in, redirect to the dashboard
+ 
       router.push('/rooms');
     }
   }, [router]);
@@ -23,7 +23,7 @@ export default function LoginPage() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage(""); // Reset message before submitting
+    setMessage("");  
 
     const credentials = { username, password };
 
@@ -40,7 +40,7 @@ export default function LoginPage() {
       
         const { name } = data; 
 
-        // Store the username and name in localStorage
+    
         localStorage.setItem("username", username); 
         localStorage.setItem("name", name); 
         localStorage.setItem("password", password);
@@ -63,17 +63,17 @@ export default function LoginPage() {
        <section className="flex justify-center items-center min-h-screen bg-gradient-to-r  from-customgreen to-customBlue">
          <div className="bg-white p-8 rounded-lg shadow-lg w-full sm:w-96 max-w-sm">
           
-          {/* Logo goes here */}
+          {/* Logo  */}
           <div className="flex justify-center mb-4">
             <Image
-              src="/logo.png"   // Path to your uploaded PNG
+              src="/logo.png"   
               alt="App Logo"
-              width={200}        // Adjust size as needed
+              width={200}       
               height={200}
-              priority           // Makes sure the image loads early
+              priority          
             />
           </div>
-          <h2 className="text-3xl font-semibold text-center text-gray-800 mb-6">Employee Login</h2>
+          <h2 className="text-3xl font-semibold text-center text-gray-800 mb-6">Staff Login</h2>
           {message && <div className="mb-4 text-center text-lg font-semibold text-red-600">{message}</div>}
           <form onSubmit={handleLogin} className="space-y-4">
             <div>

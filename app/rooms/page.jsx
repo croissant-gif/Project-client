@@ -7,8 +7,7 @@ export default function RoomSelectionPage() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const [message, setMessage] = useState("");
-  const [timing, setTiming] = useState({}); // Track each room's cleaning time
-
+  const [timing, setTiming] = useState({});  
   useEffect(() => {
     const username = localStorage.getItem("username");
     const password = localStorage.getItem("password");

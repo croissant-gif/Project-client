@@ -130,11 +130,11 @@ export default function RoomSelectionPage() {
                     selectedRoom && selectedRoom._id === room._id ? 'bg-blue-500 text-white' : 'bg-gray-100'
                   }`}
                   onClick={() => {
-                    // Toggle selection: if already selected, deselect; otherwise, select it
+                    
                     if (selectedRoom && selectedRoom._id === room._id) {
-                      setSelectedRoom(null); // Deselect room
+                      setSelectedRoom(null);  
                     } else {
-                      setSelectedRoom(room); // Select new room
+                      setSelectedRoom(room);  
                     }
                   }}
                 >
