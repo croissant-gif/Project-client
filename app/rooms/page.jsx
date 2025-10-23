@@ -8,41 +8,52 @@ export default function RoomSelectionPage() {
   const router = useRouter();
   const [message, setMessage] = useState("");
   const [timing, setTiming] = useState({});  
-  useEffect(() => {
-    const username = localStorage.getItem("username");
-    const password = localStorage.getItem("password");
-    if (!username) {
-      setMessage("You need to log in first.");
-      router.push("/login");
-      return;
-    }
+useEffect(() => {
+  const username = localStorage.getItem("username");
+  const password = localStorage.getItem("password");
 
-    const fetchAssignedRooms = async () => {
-      try {
-        const response = await fetch(`/api/todos/employee`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password }),
-        });
+  if (!username) {
+    setMessage("You need to log in first.");
+    router.push("/login");
+    return;
+  }
 
-        const data = await response.json();
+  const fetchAssignedRooms = async () => {
+    try {
+      const response = await fetch(`/api/todos/employee`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
 
-        if (response.ok) {
-          setAssignedRooms(data.assignedRooms);
-          setLoading(false);
-        } else {
-          setMessage(data.message || 'Failed to fetch rooms.');
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error('Error fetching assigned rooms:', error);
-        setMessage('Error fetching assigned rooms.');
+      const data = await response.json();
+
+      if (response.ok) {
+        setAssignedRooms(data.assignedRooms);
+        setLoading(false);
+      } else {
+        setMessage(data.message || 'Failed to fetch rooms.');
         setLoading(false);
       }
-    };
+    } catch (error) {
+      console.error('Error fetching assigned rooms:', error);
+      setMessage('Error fetching assigned rooms.');
+      setLoading(false);
+    }
+  };
 
+  // Initial fetch
+  fetchAssignedRooms();
+
+  // Set up polling every 1.5 seconds
+  const intervalId = setInterval(() => {
     fetchAssignedRooms();
-  }, [router]);
+  }, 1500); // 1.5 seconds
+
+  // Cleanup on unmount
+  return () => clearInterval(intervalId);
+}, [router]);
+
 
   const formatDate = (date) => {
     if (!date) return 'N/A';
@@ -99,6 +110,10 @@ export default function RoomSelectionPage() {
                     <td className="px-6 py-4 border-b text-sm font-medium">{formatDate(room.departureDate)}</td>
                     <td className="px-6 py-4 border-b text-sm font-medium">{formatTime(room.arrivalTime)}</td>
                     <td className="px-6 py-4 border-b text-sm font-medium">{room.specialRequest}</td>
+ 
+                    
+
+                     
                   </tr>
                 ))
               ) : (

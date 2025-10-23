@@ -23,66 +23,81 @@ export default function RoomSelectionPage() {
 
 
   useEffect(() => {
-    const username = localStorage.getItem("username");
-    const password = localStorage.getItem("password");
+  const username = localStorage.getItem("username");
+  const password = localStorage.getItem("password");
 
-    if (!username) {
-      setMessage('You need to log in first.');
-      router.push('/login');
-      return;
-    }
+  if (!username) {
+    setMessage('You need to log in first.');
+    router.push('/login');
+    return;
+  }
 
-    const fetchAssignedRooms = async () => {
-      try {
-        const response = await fetch(`/api/todos/employee`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username,password }),
-        });
+  const fetchAssignedRooms = async () => {
+    try {
+      const response = await fetch(`/api/todos/employee`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
 
-        const data = await response.json();
+      const data = await response.json();
 
-        if (response.ok) {
-          setAssignedRooms(data.assignedRooms);
-          setLoading(false);
-        } else {
-          setMessage(data.message || 'Failed to fetch rooms.');
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error('Error fetching assigned rooms:', error);
-        setMessage('Error fetching assigned rooms.');
+      if (response.ok) {
+        setAssignedRooms(data.assignedRooms);
+        setLoading(false);
+      } else {
+        setMessage(data.message || 'Failed to fetch rooms.');
         setLoading(false);
       }
-    };
+    } catch (error) {
+      console.error('Error fetching assigned rooms:', error);
+      setMessage('Error fetching assigned rooms.');
+      setLoading(false);
+    }
+  };
 
-    fetchAssignedRooms();
-  }, [router]);
+  // Initial fetch
+  fetchAssignedRooms();
 
-  useEffect(() => {
-    if (!selectedRoom) return;
+  // Poll every 1.5 seconds
+  const intervalId = setInterval(fetchAssignedRooms, 1500);
 
-    const fetchInventories = async () => {
-      const roomId = selectedRoom._id;
+  return () => clearInterval(intervalId); // Cleanup
+}, [router]);
 
-      try {
-        const response = await fetch(`/api/todos/roomitems?roomId=${roomId}`);
-        if (response.ok) {
-          const data = await response.json();
-          const updatedInventories = inventories.filter(
-            (inventory) => inventory.roomId !== selectedRoom._id
-          );
-          updatedInventories.push({ roomId: selectedRoom._id, inventory: data });
-          setInventories(updatedInventories);
-          localStorage.setItem('inventories', JSON.stringify(updatedInventories));
-        }
-      } catch (error) {
-        console.error('Failed to fetch inventories', error);
+
+useEffect(() => {
+  if (!selectedRoom) return;
+
+  const fetchInventories = async () => {
+    const roomId = selectedRoom._id;
+
+    try {
+      const response = await fetch(`/api/todos/roomitems?roomId=${roomId}`);
+      if (response.ok) {
+        const data = await response.json();
+        const updatedInventories = inventories.filter(
+          (inventory) => inventory.roomId !== roomId
+        );
+        updatedInventories.push({ roomId, inventory: data });
+
+        setInventories(updatedInventories);
+        localStorage.setItem('inventories', JSON.stringify(updatedInventories));
       }
-    };
+    } catch (error) {
+      console.error('Failed to fetch inventories', error);
+    }
+  };
 
-    fetchInventories();
-  }, [selectedRoom]);
+  // Initial fetch
+  fetchInventories();
+
+  // Poll every 2 seconds
+  const intervalId = setInterval(fetchInventories, 2000);
+
+  return () => clearInterval(intervalId); // Cleanup
+}, [selectedRoom]);
+
 
   
 

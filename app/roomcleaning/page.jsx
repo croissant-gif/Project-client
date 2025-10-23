@@ -18,65 +18,133 @@ export default function RoomSelectionPage() {
     'Status Unclear', 'Make up Room', 'Due Out', 'Did Not Check Out', 'House Use', 'Sleep Out'
   ];
 
-  useEffect(() => {
-    const username = localStorage.getItem("username");
-    const password = localStorage.getItem("password");
-    if (!username) {
-      setMessage("You need to log in first.");
-      router.push("/login");
-      return;
-    }
-  
-    const fetchAssignedRooms = async () => {
-      try {
-        const response = await fetch('/api/todos/employee', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username,password }),
-        });
-  
-        const data = await response.json();
-  
-        if (response.ok) {
-          // Retrieve startTime from localStorage and update assignedRooms
-          const roomsWithStartTime = data.assignedRooms.map((room) => {
-            const storedStartTime = localStorage.getItem(`startTime-${room._id}`);
-            return storedStartTime ? { ...room, startTime: storedStartTime } : room;
+
+ useEffect(() => {
+  // Request notification permission on mount
+  if (typeof window !== 'undefined' && "Notification" in window) {
+    Notification.requestPermission().then((permission) => {
+      if (permission !== "granted") {
+        console.log("Notification permission denied");
+      }
+    });
+  }
+}, []);
+
+useEffect(() => {
+const checkForUpcomingRooms = () => {
+  const now = new Date();
+
+  setAssignedRooms((prevRooms) => {
+    return prevRooms.map((room) => {
+      const notifiedKey = `notified-${room._id}`;
+
+      if (
+        !room.schedule_start ||
+        localStorage.getItem(notifiedKey) || 
+        room.finishTime ||
+        room.status === 'CLEANING'
+      ) {
+        return room;
+      }
+
+      const scheduledStart = getScheduleDateTime(room);
+      if (!scheduledStart || isNaN(scheduledStart)) return room;
+
+      const diffMs = scheduledStart - now;
+      const diffMins = diffMs / (1000 * 60);
+
+      if (diffMins <= 3 && diffMins > 2.5) {
+        if (Notification.permission === "granted") {
+          new Notification("Cleaning Reminder", {
+            body: `You're scheduled to clean room ${room.roomName} in less than 3 minutes.`,
+            icon: "/cleaning-icon.png",
           });
-  
-          setAssignedRooms(roomsWithStartTime);
-          setLoading(false);
-        } else {
-          setMessage(data.message || 'Failed to fetch rooms.');
-          setLoading(false);
         }
-      } catch (error) {
-        console.error('Error fetching assigned rooms:', error);
-        setMessage('Error fetching assigned rooms.');
+
+        // Store notified flag
+        localStorage.setItem(notifiedKey, "true");
+      }
+
+      return room;
+    });
+  });
+};
+
+  const interval = setInterval(checkForUpcomingRooms, 10000); // every 10 seconds
+  return () => clearInterval(interval);
+}, []);
+
+  //================================================================================================================================================================================
+
+useEffect(() => {
+  const username = localStorage.getItem("username");
+  const password = localStorage.getItem("password");
+
+  if (!username) {
+    setMessage("You need to log in first.");
+    router.push("/login");
+    return;
+  }
+
+  const fetchAssignedRooms = async () => {
+    try {
+      const response = await fetch('/api/todos/employee', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await response.json();
+
+
+      if (response.ok) {
+        const roomsWithStartTime = data.assignedRooms.map((room) => {
+          const storedStartTime = localStorage.getItem(`startTime-${room._id}`);
+          return storedStartTime ? { ...room, startTime: storedStartTime } : room;
+        });
+
+        setAssignedRooms(roomsWithStartTime);
+        setLoading(false);
+      } else {
+        setMessage(data.message || 'Failed to fetch rooms.');
         setLoading(false);
       }
-    };
-  
-    const fetchUserConditions = async () => {
-      try {
-        const response = await fetch('/api/todos/conditions');
-        const data = await response.json();
-        if (data) {
-          setUserConditions(data);  // Update state with conditions from MongoDB
-        }
-      } catch (error) { 
-        console.error('Error fetching conditions from MongoDB:', error);
+    } catch (error) {
+      console.error('Error fetching assigned rooms:', error);
+      setMessage('Error fetching assigned rooms.');
+      setLoading(false);
+    }
+  };
+
+  const fetchUserConditions = async () => {
+    try {
+      const response = await fetch('/api/todos/conditions');
+      const data = await response.json();
+      if (data) {
+        setUserConditions(data);
       }
-    };
-  
+    } catch (error) {
+      console.error('Error fetching conditions from MongoDB:', error);
+    }
+  };
+
+  // Initial fetch
+  fetchAssignedRooms();
+  fetchUserConditions();
+
+  // Polling every 15 seconds
+  const intervalId = setInterval(() => {
     fetchAssignedRooms();
     fetchUserConditions();
-  }, [router]);
+  }, 3000); // 15 seconds
+
+  return () => clearInterval(intervalId); // Cleanup
+}, [router]);
+
   
 
- const handleStatusChange = async (roomId, newStatus, startTime = null, finishTime = null) => {
+const handleStatusChange = async (roomId, newStatus, startTime = null, finishTime = null) => {
   try {
-    // Update the rooms with new status and startTime
     const updatedRooms = assignedRooms.map((room) =>
       room._id === roomId
         ? { 
@@ -92,12 +160,21 @@ export default function RoomSelectionPage() {
 
     const updatedRoom = updatedRooms.find((room) => room._id === roomId);
 
-    // Send the updated room to your backend API to update MongoDB
-    const response = await fetch('/api/todos/rooms', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updatedRoom),
-    });
+    // Clear notification flag if cleaning is finished
+    if (newStatus !== 'CLEANING') {
+      localStorage.removeItem(`notified-${roomId}`);
+    }
+
+ const response = await fetch('/api/todos/rooms', {
+  method: 'PUT',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    ...updatedRoom,
+  user: localStorage.getItem("name") || "Unknown",
+
+  }),
+});
+
 
     const data = await response.json();
     if (!response.ok) {
@@ -107,6 +184,7 @@ export default function RoomSelectionPage() {
     console.error('Error updating room status:', error);
   }
 };
+
 
   
 const handleRoomClick = async (roomId) => {
@@ -131,16 +209,19 @@ const handleRoomClick = async (roomId) => {
     );
 
     try {
-      const response = await fetch('/api/todos/rooms', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          _id: roomId,
-          status: 'CLEANING',
-          startTime,
-          finishTime: null,
-        }),
-      });
+const response = await fetch('/api/todos/rooms', {
+  method: 'PUT',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    _id: roomId,
+    status: 'CLEANING',
+    startTime,
+    finishTime: null,
+   user: localStorage.getItem("name") || "Unknown",
+
+  }),
+});
+
 
       const data = await response.json();
       if (!response.ok) {
@@ -153,10 +234,7 @@ const handleRoomClick = async (roomId) => {
     }
   }
 };
-
-
-  
-  
+ 
 
   const handleFinishCleaning = (roomId) => {
     setSelectedRoomId(roomId);
@@ -201,6 +279,17 @@ const formatTime = (time) => {
   });
 };
 
+const getScheduleDateTime = (room) => {
+  if (!room.schedule_start) return null;
+
+  if (/^\d{2}:\d{2}$/.test(room.schedule_start)) {
+    const today = new Date().toISOString().split('T')[0];
+    return new Date(`${today}T${room.schedule_start}:00`);
+  }
+
+  return new Date(room.schedule_start);
+};
+
   if (loading) {
     return <div>Loading...</div>;  
   }
@@ -219,14 +308,15 @@ const formatTime = (time) => {
                 <p className="text-sm text-gray-500">Arrival: {formatDate(room.arrivalDate)}</p>
                 <p className="text-sm text-gray-500">Departure: {formatDate(room.departureDate)}</p>
                  <p className="text-sm text-gray-500">Arrival Time: {formatTime(room.arrivalTime)}</p>
-                <p className="text-sm text-gray-500">Special Request: {room.specialRequest}</p>
-
-             {room.finishTime ? (
-  <div className="mt-4  font-semibold text-green-600">
-    <p>Finished Cleaning</p>
-  </div>
-) : room.status === 'CLEANING' ? (
-  <div className="mt-4 text-black">
+                 <p className="text-sm text-gray-500">Schedule Date: {room.schedule_date}</p>
+                <p className="text-sm text-gray-500">Schedule Start: {formatTime(room.schedule_start)}</p>
+                <p className="text-sm text-gray-500">Schedule Finish: {formatTime(room.schedule_finish)}</p>
+                {room.finishTime ? (
+                   <div className="mt-4  font-semibold text-green-600">                  
+                   <p>Finished Cleaning</p>
+                    </div>
+                  ) : room.status === 'CLEANING' ? (
+                    <div className="mt-4 text-black">
     <p>Started Cleaning: {formatTime(room.startTime)}</p>
     <button
       onClick={() => handleFinishCleaning(room._id)}
@@ -234,17 +324,17 @@ const formatTime = (time) => {
     >
       Finish Cleaning
     </button>
-  </div>
-) : (
-  <div className="mt-4">
+                    </div>
+                  ) : (
+                    <div className="mt-4">
     <button
       onClick={() => handleRoomClick(room._id)} 
       className="bg-blue-500 text-white px-4 py-2 rounded-md"
     >
       Start Cleaning
     </button>
-  </div>
-)}
+                    </div>
+                  )}
 
 
                 {room.finishTime && (

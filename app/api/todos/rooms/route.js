@@ -1,59 +1,98 @@
-import dbConnect from '../../../../utils/dbConnect'; // Adjust path if needed
-import Rooms from '../../../../models/Rooms';  // Make sure your Room model is correct
-
+import dbConnect from '../../../../utils/dbConnect';
+import Rooms from '../../../../models/Rooms';
+import CleaningLog from '../../../../models/CleaningLog'; // ✅ ADD THIS LINE
 
 dbConnect();
 
-// GET handler to fetch rooms
-export async function GET() {
-  try {
-    const rooms = await Rooms.find({}); // Fetch all rooms
-    return new Response(JSON.stringify(rooms), { status: 200 });
-  } catch (error) {
-    console.error('Error fetching rooms:', error);
-    return new Response('Failed to fetch rooms', { status: 500 });
-  }
-}
-
-// POST handler to add rooms
-export async function POST(request) {
+// PUT handler to update a room's details
+export async function PUT(request) {
   const body = await request.json();
-
   const {
+    _id,
     roomName,
     roomType,
-    specialRequest = '',
-    assignedTo = null,
-    status = '',
-    arrivalDate = null,
-    departureDate = null,
-    arrivalTime = ''
+    status,
+    arrivalDate,
+    departureDate,
+    arrivalTime,
+    assignedTo,
+    startTime,
+    finishTime,
+    schedule_date,
+    schedule_start,
+    schedule_finish,
+    user, // ✅ Capture user from frontend
   } = body;
 
-  if (!roomName || !roomType) {
-    return new Response('Room name and type are required', { status: 400 });
+  if (!_id) {
+    return new Response('Room ID is required', { status: 400 });
   }
 
   try {
-    const newRoom = await Rooms.create({
-      roomName,
-      roomType,
-      specialRequest,
-      assignedTo,
-      status,
-      arrivalDate,
-      departureDate,
-      arrivalTime,
-      createdAt: new Date(),
-    });
+    // Update the room with startTime and finishTime (if provided)
+    const updatedRoom = await Rooms.findByIdAndUpdate(
+      _id,
+      {
+        roomName,
+        roomType,
+        status,
+        arrivalDate,
+        departureDate,
+        arrivalTime,
+        assignedTo,
+        startTime,
+        finishTime,
+        schedule_date,
+        schedule_start,
+        schedule_finish,
+      },
+      { new: true }
+    );
 
-    return new Response(JSON.stringify(newRoom), { status: 201 });
-  } catch (error) {
-    console.error('Error creating room:', error);
-    return new Response('Failed to create room', { status: 500 });
-  }
+    if (!updatedRoom) {
+      return new Response('Room not found', { status: 404 });
+    }
+
+    // ✅ Add this block to log cleaning activity
+    let logStatus = null;
+
+    if (status === 'CLEANING' && startTime && !finishTime) {
+      logStatus = 'STARTED';
+    } else if (status !== 'CLEANING' && finishTime) {
+      logStatus = 'FINISHED';
+    }
+
+if (status === 'CLEANING' && startTime && !finishTime) {
+  // ➕ Create a new STARTED log
+  await CleaningLog.create({
+    roomId: _id,
+    roomName: updatedRoom.roomName,
+    user: user || 'Unknown',
+    status: 'STARTED',
+    startTime,
+    finishTime: null,
+  });
+} else if (status !== 'CLEANING' && finishTime) {
+  // ✅ Update existing STARTED log to FINISHED
+  await CleaningLog.findOneAndUpdate(
+    { roomId: _id, status: 'STARTED' }, // Find the in-progress cleaning log
+    {
+      $set: {
+        finishTime,
+        status: 'FINISHED',
+      },
+    },
+    { new: true }
+  );
 }
 
+
+    return new Response(JSON.stringify(updatedRoom), { status: 200 });
+  } catch (error) {
+    console.error('Error updating room:', error);
+    return new Response('Failed to update room', { status: 500 });
+  }
+}
 // DELETE handler to delete a room
 export async function DELETE(request) {
   const body = await request.json(); 
@@ -77,53 +116,7 @@ export async function DELETE(request) {
 }
 
 // PUT handler to update a room's details
-export async function PUT(request) {
-  const body = await request.json();
-  const {
-    _id,
-    roomName,
-    roomType,
-    status,
-    arrivalDate,
-    departureDate,
-    arrivalTime,
-    assignedTo,
-    startTime,     
-    finishTime     
-  } = body;
 
-  if (!_id) {
-    return new Response('Room ID is required', { status: 400 });
-  }
-
-  try {
-    // Update the room with startTime and finishTime (if provided)
-    const updatedRoom = await Rooms.findByIdAndUpdate(
-      _id,
-      {
-        roomName,
-        roomType,
-        status,
-        arrivalDate,
-        departureDate,
-        arrivalTime,
-        assignedTo,
-        startTime,   
-        finishTime  
-      },
-      { new: true }
-    );
-
-    if (!updatedRoom) {
-      return new Response('Room not found', { status: 404 });
-    }
-
-    return new Response(JSON.stringify(updatedRoom), { status: 200 });
-  } catch (error) {
-    console.error('Error updating room:', error);
-    return new Response('Failed to update room', { status: 500 });
-  }
-}
 
 // PATCH handler to update assigned employee
  
